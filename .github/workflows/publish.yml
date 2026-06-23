@@ -26,8 +26,8 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@grupo-sbf'
 
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
+      # No install/build: this plugin ships its source (server/ + admin/) as-is
+      # and defines no prepublish lifecycle, so publishing needs no dependencies.
 
       - name: Assert package version matches the tag
         run: |
