@@ -59,6 +59,7 @@ module.exports = ({ strapi }) => ({
 
 		// ensure entity exists before attempting mutations.
 		if (!entity) {
+			await strapi.entityService.delete(actionUId, record.id);
 			return;
 		}
 
@@ -72,6 +73,6 @@ module.exports = ({ strapi }) => ({
 		}
 
 		// remove any used actions
-		strapi.entityService.delete(actionUId, record.id);
+		await strapi.entityService.delete(actionUId, record.id);
 	},
 });
