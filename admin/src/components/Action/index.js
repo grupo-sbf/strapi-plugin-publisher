@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useRBAC } from '@strapi/helper-plugin';
 import { useReactQuery } from '../../hooks/useReactQuery';
@@ -16,9 +16,20 @@ const Action = ({ mode, entitySlug, entityId }) => {
 	const [isDisabled, setIsDisabled] = useState(false);
 	const [canPublish, setCanPublish] = useState(false);
 
-	const { isLoading: isLoadingPermissions, allowedActions } = useRBAC({
-		publish: [{ action: 'plugin::content-manager.explorer.publish', subject: entitySlug }],
-	});
+	// `useRBAC` memoizes its permission names on the identity of this object
+	// (`useMemo(() => Object.keys(permissions), [permissions])`) and keys its
+	// permission-check effect on that memo. Passing a fresh object literal makes the
+	// memo recompute on every render, so the effect re-runs, dispatches, and triggers
+	// another render — an infinite render loop that pegs the main thread with no error.
+	// Keep the reference stable so the check runs once per entitySlug.
+	const rbacPermissions = useMemo(
+		() => ({
+			publish: [{ action: 'plugin::content-manager.explorer.publish', subject: entitySlug }],
+		}),
+		[entitySlug]
+	);
+
+	const { isLoading: isLoadingPermissions, allowedActions } = useRBAC(rbacPermissions);
 
 	const { isLoading, data, isRefetching } = actionQueries.getEntityAction({
 		mode,
@@ -49,7 +60,7 @@ const Action = ({ mode, entitySlug, entityId }) => {
 		if (!isLoadingPermissions) {
 			setCanPublish(allowedActions.canPublish);
 		}
-	}, [isLoadingPermissions]);
+	}, [isLoadingPermissions, allowedActions.canPublish]);
 
 	return (
 		<Box marginTop={4}>
